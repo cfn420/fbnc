@@ -1,4 +1,4 @@
-# 📐 Feature-Based Network Construction (FBNC)
+# Feature-Based Network Construction (FBNC)
 
 This repository implements the **Feature-Based Network Construction (FBNC)** framework, a gradient-based algorithm to construct and modify weighted directed graphs that **exactly match a set of prescribed structural features**.
 
@@ -8,7 +8,7 @@ The method supports both:
 
 FBNC is introduced in the paper:
 
-> **Franssen, C. P., Berkhout, J., & Heidergott, B. F. (2024).**  
+> **Franssen, C., Berkhout, J., & Heidergott, B. (2024).**  
 > *Feature-Based Network Construction: From Sampling to What-if Analysis*.  
 > [arXiv:2412.05124](https://arxiv.org/abs/2412.05124)
 
