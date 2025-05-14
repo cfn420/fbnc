@@ -37,8 +37,8 @@ UB              = 1.0 # Upper bound for edge weights
 N_SAMPLES       = 2 # Number of samples to be generated (only for sampling mode)
 
 # Network settings
-W_0             = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
-N,_             = W_0.shape
+W0             = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
+N,_             = W0.shape
 PARAMS          = np.ones((N,N)) - np.eye(N) # Which edges may be used?
 UNDIRECTED_GRAPH  = False
 MARKOVIAN_GRAPH   = True
@@ -126,7 +126,7 @@ def main():
             fitted_net.save(out_dir / f"network_{i+1}.npz")
     
     elif problem.fbnc_type == "what-if":
-        net = Network(mA=problem.mA, W=W_0, bUndirected=UNDIRECTED_GRAPH)
+        net = Network(mA=problem.mA, W=W0, bUndirected=UNDIRECTED_GRAPH)
         fitted_net = run_fbnc(net, problem, logger, FBNC_ALG_CONFIG)
         
         # Save network
