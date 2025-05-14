@@ -1,0 +1,17 @@
+name: fbnc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12.2
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - networkx
+  - sympy
+  - openpyxl
+  - tqdm
+  - pip
+  - pip:
+    - keyboard
