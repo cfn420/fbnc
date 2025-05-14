@@ -46,8 +46,8 @@ UB              = 1.0 # Upper bound for edge weights
 N_SAMPLES       = 2 # Number of samples to be generated (only for sampling mode)
 
 # Network settings
-W_0             = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
-N,_             = W_0.shape
+W0              = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
+N,_             = W0.shape
 PARAMS          = np.ones((N,N)) - np.eye(N) # Which edges may be used?
 UNDIRECTED_GRAPH  = False
 MARKOVIAN_GRAPH   = True
