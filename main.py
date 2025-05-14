@@ -30,32 +30,26 @@ RESULTS_DIR     = PROJECT_ROOT / "results"
 
 # FBNC problem type
 FBNC_TYPE       = "what-if" # 'sampling' or 'what-if'
-FEATURES        = [kemeny_constant(31.5)] # List of feature(target) to be used
-NORM            = 2 # L1 norm
+FEATURES        = [kemeny_constant(31.638)] # List of feature(target) to be used
+NORM            = 2 # Choose L1 or L2 norm
 LB              = 0.0 # Lower bound for edge weights
 UB              = 1.0 # Upper bound for edge weights
+N_SAMPLES       = 2 # Number of samples to be generated (only for sampling mode)
 
-# Specific settings for sampling
-N               = 10 # Number of nodes
-PARAMS          = np.ones((N,N)) - np.eye(N) # Which edges may be used?
-N_SAMPLES       = 2 # Number of samples to be generated
-
-# Specific settings for what-if analysis
+# Network settings
 W_0             = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
 N,_             = W_0.shape
 PARAMS          = np.ones((N,N)) - np.eye(N) # Which edges may be used?
-
-# Network settings
 UNDIRECTED_GRAPH  = False
 MARKOVIAN_GRAPH   = True
 
 # FBNC solver parameters
 FBNC_ALG_CONFIG = SimpleNamespace(
-    max_iter    = 1_000_000, # Number of iterations
+    max_iter    = 10000, # Number of iterations
     beta        = 0.5, # Armijo parameter
     sigma       = 0.5, # Armijo parameter
-    alpha_ini   = 1.,  # Armijo step size parameter
-    omega       = 1e-8, # Convergence threshold
+    alpha_ini   = 1e-3,  # Armijo step size parameter
+    omega       = 1e-3, # Convergence threshold
 )
 
 
