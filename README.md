@@ -127,6 +127,11 @@ If you use this repository, please cite the original paper:
 
 ---
 
+## 🙏 Acknowledgement
+The `data/financial_network_example.csv` data on the Argentinian inter bank market is extracted from: https://github.com/fedeglan/my-projects/tree/main/Datasets.
+
+---
+
 ## 🛡️ License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
