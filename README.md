@@ -4,7 +4,7 @@ This repository implements the **Feature-Based Network Construction (FBNC)** fra
 
 The method supports both:
 - **Hard constraint sampling**, generating networks that satisfy features exactly.
-- **What-if analysis**, modifying an initial network to desire a feature while minimally while adjusting the network.
+- **What-if analysis**, modifying an initial network to desire a feature while minimally adjusting the network.
 
 FBNC is introduced in the paper:
 
