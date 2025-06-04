@@ -2,7 +2,6 @@
 
 import logging
 import numpy as np
-import keyboard
 from scipy import optimize
 from copy import deepcopy
 
@@ -310,10 +309,5 @@ def fit(net, problem, config=None):
         m = armijo_line_search(net, problem, delta, alpha, config.beta, config.sigma)
         vX[k+1] = vX[k] + config.beta**m * alpha * delta
         net.x = vX[k+1]
-
-        # Exit if ESC pressed
-        if keyboard.is_pressed('esc'):
-            logger.warning("Optimization manually interrupted at iteration %d.", k)
-            break
     
     return Network(mA=problem.mA, x=vX[k], bUndirected=problem.bUndirected)

@@ -13,5 +13,3 @@ dependencies:
   - openpyxl
   - tqdm
   - pip
-  - pip:
-    - keyboard
