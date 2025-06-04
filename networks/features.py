@@ -96,7 +96,7 @@ def s_out(target):
 
         return jac
 
-    return Feature("s_out", target, value_fn, jacobian_fn, projected=True)
+    return Feature("s_out", target, value_fn, jacobian_fn, projected=False)
 
 
 def s_in(target):

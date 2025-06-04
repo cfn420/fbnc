@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from scipy import optimize
 from copy import deepcopy
+import sys
 
 from networks.network import Network
 from optimization.projections import projection
@@ -11,6 +12,24 @@ from optimization.feasibility import feasible
 from utils import norm_Lp
 
 logger = logging.getLogger(__name__)
+
+def check_validity_descent_direction(gradient, delta):
+    """
+    Checks directional derivative of delta for invalidity by computing gradient @ delta.
+
+    Parameters:
+        gradient (np.ndarray): Gradient vector.
+        delta (np.ndarray): Descent direction vector.
+
+    Raises:
+        Warning: If the gradient and descent direction are not aligned.
+    """
+    if gradient @ delta > 0:
+        logger.warning("Gradient and descent direction are not aligned. Check the implementation.")
+        logger.warning("Gradient @ delta: %.6f", gradient @ delta)
+        raise Warning("Gradient and descent direction are not aligned. Check the implementation.")
+    else:
+        logger.info("Gradient and descent direction are aligned (negative).")
 
 def max_stepsize(net, problem, delta, config):
     """
@@ -64,7 +83,10 @@ def loss_gradient(net, problem):
 
         # Support both scalar and array outputs
         diff = feature.value(net) - feature.target
-        grad += 2 * np.sum(diff) * feature.jacobian(net, problem=problem)
+        if np.isscalar(diff) or diff.ndim == 0:
+            grad += 2 * diff * feature.jacobian(net, problem=problem)
+        else:
+            grad += 2 * diff @ feature.jacobian(net, problem=problem)
 
     return grad
 
@@ -86,22 +108,18 @@ def armijo_line_search(net, problem, delta, alpha=1.0, beta=0.5, sigma=0.5):
     Raises:
         RuntimeError: If line search exceeds iteration limit.
     """
-    gradient = loss_gradient(net, problem)
-    if gradient @ delta >= 0:
-        logger.warning("Gradient and descent direction are not aligned. Check the implementation.")
-        raise Warning("Gradient and descent direction are not aligned. Check the implementation.")
-    
     k = 0
     net_perturb = deepcopy(net)
     net_perturb.x = net.x + beta**k * alpha * delta
-    while problem.loss(net) - problem.loss(net_perturb) <= -sigma * beta**k * alpha * (gradient @ delta):
+    while problem.loss(net) - problem.loss(net_perturb) <= -sigma * beta**k * alpha * (problem.gradient @ delta):
+        
         k+=1
         net_perturb.x = net.x + beta**k * alpha * delta
+        feasible(net_perturb, problem)
         if k > 100:
-            # This is a safeguard against infinite loops. In practice, this should not happen.
-            print(gradient @ delta)
-            logger.warning("Line search exceeded 100 iterations. Check the implementation.")
-            raise Warning("Line search exceeded 100 iterations. Check the implementation.")
+            logger.warning(f"Line search exceeded 100 iterations. Directional derivative ({problem.gradient @ delta}) too small?.")
+            sys.exit(1)
+
     return k
 
 def L2_descent(net, problem, gradient):
@@ -118,7 +136,8 @@ def L2_descent(net, problem, gradient):
     """
 
     # Define the active set A
-    A = ((net.x == problem.lb) & (gradient > 0)) | ((net.x == problem.ub) & (gradient < 0))
+    A = (np.isclose(net.x, problem.lb, atol=problem.tol) & (gradient > 0)) | \
+        (np.isclose(net.x, problem.ub, atol=problem.tol) & (gradient < 0))
 
     # Construct δ
     delta_tilde = np.zeros_like(gradient)
@@ -143,7 +162,10 @@ def L1_descent(net, problem, gradient):
         np.ndarray: Sparse descent direction vector.
     """
     delta = L2_descent(net, problem, gradient)
-    ij = np.argmax(np.abs(delta))
+    abs_delta = np.abs(delta)
+    max_val = np.max(abs_delta)
+    max_indices = np.flatnonzero(abs_delta == max_val)
+    ij = np.random.choice(max_indices)  # Randomly select among all maxima
     sign = np.sign(delta[ij])
     e = np.zeros_like(delta)
     e[ij] = sign
@@ -259,8 +281,7 @@ def descent_direction(net, problem):
         ValueError: If the norm type is invalid.
         RuntimeError: If descent direction is not aligned with the gradient.
     """
-    # raise Warning("Check if all gradient computations are correct.")
-    gradient = loss_gradient(net, problem)
+    gradient = problem.gradient
     if problem.bMarkovian == False:
         if problem.p_norm == 1:
             delta = L1_descent(net, problem, gradient)
@@ -275,11 +296,6 @@ def descent_direction(net, problem):
             delta = L2_descent_markovian(net, problem, gradient)
         else:
             raise ValueError("Invalid p-norm specified. Only 1 and 2 are supported.")
-
-    if gradient @ delta > 0:
-        logger.warning("Gradient and descent direction are not aligned. Check the implementation.")
-        print('gradient @ delta', gradient @ delta)
-        raise Warning("Gradient and descent direction are not aligned. Check the implementation.")
 
     return delta
 
@@ -303,22 +319,25 @@ def fit(net, problem, config=None):
     for k in range(max_iter - 1):
 
         # Objective evaluation
-        # feasible(net, problem)
         vObj[k] = problem.loss(net)
+
+        # Compute descent direction
+        problem.gradient = loss_gradient(net, problem)
+        delta = descent_direction(net, problem)
 
         # Check convergence
         if k > 0:
-            if vObj[k] < config.omega:  
-                logger.info(f"Target reached at iteration {k}.")
+            # check if all targets are reached
+            if all(np.all(np.abs(feature.value(net) - feature.target) < config.omega) for feature in problem.features):  
+                logger.info(f"Feature target(s) reached at iteration {k}.")
                 break
-            elif abs(vObj[k] - vObj[k - 1]) < config.omega:
-                logger.info(f"Converged (Δobj < {config.omega}) at iteration {k}.")
+            elif np.isclose(problem.gradient @ delta, 0):
+                logger.info(f"Loss ({vObj[k]:.6f}) is not 0! But convergence reached (directional derivative ({problem.gradient @ delta:.6f}) zero) at iteration {k}.")
                 break
             else:
                 logger.info(f"Iteration {k} - Loss: {vObj[k]:.6f}")
 
         # Descent update
-        delta = descent_direction(net, problem)
         alpha = max_stepsize(net, problem, delta, config=config)
         m = armijo_line_search(net, problem, delta, alpha, config.beta, config.sigma)
         vX[k+1] = vX[k] + config.beta**m * alpha * delta

@@ -52,6 +52,9 @@ class ProblemInstance:
         # Projection matrices
         self.initialize_projection_matrices()
 
+        # Save problem gradient 
+        self.gradient = None 
+
     def loss(self, net):
         """
         Computes the sum of squared differences between actual and target values 
@@ -98,9 +101,9 @@ class ProblemInstance:
 
         for feature in self.features:
             name = feature.name.lower()
-            if name == "s_in":
+            if name == "s_in" and feature.projected:
                 s_in_feature = feature
-            elif name == "s_out":
+            elif name == "s_out" and feature.projected:
                 s_out_feature = feature
 
         if self.bMarkovian:
