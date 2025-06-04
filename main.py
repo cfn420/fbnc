@@ -37,7 +37,7 @@ UB              = 1.0 # Upper bound for edge weights
 N_SAMPLES       = 2 # Number of samples to be generated (only for sampling mode)
 
 # Network settings
-W0             = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
+W0              = load_csv_matrix(DATA_DIR / "social_network_example.csv") # Initial weights for what-if analysis
 N,_             = W0.shape
 PARAMS          = np.ones((N,N)) - np.eye(N) # Which edges may be used?
 UNDIRECTED_GRAPH  = False
@@ -55,6 +55,36 @@ FBNC_ALG_CONFIG = SimpleNamespace(
 
 # ─── END CONFIGURATION ────────────────────────────────────────
 
+def log_features(net, features):
+    """
+    Logs the values and targets of the features in the problem instance.
+    Handles both scalar and vector-valued feature functions.
+    If a vector has more than 10 elements, only the first 10 are shown.
+    """
+    logger = logging.getLogger(__name__)
+    for feature in features:
+        value = feature.value(net)
+        target = feature.target
+        if np.isscalar(value):
+            logger.info(f"Feature: {feature.name}, Value: {value:.4f}, Target: {target:.4f}")
+        else:
+            value = np.ravel(value)
+            target = np.ravel(target)
+            n = len(value)
+            if n > 10:
+                value_str = "[" + ", ".join(f"{v:.4f}" for v in value[:10]) + ", ...]"
+                target_str = "[" + ", ".join(f"{t:.4f}" for t in target[:10]) + ", ...]"
+                logger.info(
+                    f"Feature: {feature.name}, Value (first 10 of {n}): {value_str}, Target (first 10 of {n}): {target_str}"
+                )
+            else:
+                value_str = "[" + ", ".join(f"{v:.4f}" for v in value) + "]"
+                target_str = "[" + ", ".join(f"{t:.4f}" for t in target) + "]"
+                logger.info(
+                    f"Feature: {feature.name}, Value: {value_str}, Target: {target_str}"
+                )
+    logger.info("")
+
 def run_fbnc(net, problem, logger, FBNC_ALG_CONFIG):
     """
     Runs the FBNC optimization algorithm on a given network and problem setup.
@@ -68,7 +98,7 @@ def run_fbnc(net, problem, logger, FBNC_ALG_CONFIG):
     Returns:
         Network: The fitted network after optimization.
     """
-    logger.info("Starting FBNC…")
+    logger.info("Starting FBNC algorithm…")
     t0 = time.time()
     fitted_net = fit(net, problem, config=FBNC_ALG_CONFIG)
     feasible(fitted_net, problem) # Check feasibility
@@ -127,7 +157,18 @@ def main():
     
     elif problem.fbnc_type == "what-if":
         net = Network(mA=problem.mA, W=W0, bUndirected=UNDIRECTED_GRAPH)
+        feasible(net, problem)  # Check feasibility
+
+        # print initial features and targets
+        logger.info(f"Initial features and targets:")
+        log_features(net, problem.features)
+
         fitted_net = run_fbnc(net, problem, logger, FBNC_ALG_CONFIG)
+        logging.info("")
+
+        # print final features and targets
+        logger.info(f"Final features and targets:")
+        log_features(net, problem.features)
         
         # Save network
         fitted_net.save(out_dir / f"network.npz")
