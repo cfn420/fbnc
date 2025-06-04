@@ -57,7 +57,7 @@ class Feature:
             NotImplementedError: If no jacobian function is provided.
         """
         if self.jacobian_fn is not None:
-            return self.jacobian_fn(net, problem)
+            return self.jacobian_fn(net, problem=problem)
         else:
             raise NotImplementedError(
                 f"Gradient for feature '{self.name}' must be manually added if needed."
@@ -87,7 +87,7 @@ def s_out(target):
     def value_fn(net):
         return np.sum(net.W_matrix, axis=1)
     
-    def jacobian_fn(net):
+    def jacobian_fn(net, *, problem=None, **kwargs):
         jac = np.zeros((net.n, net.x.size))
 
         for i in range(net.n):
@@ -112,7 +112,7 @@ def s_in(target):
     def value_fn(net):
         return np.sum(net.W_matrix, axis=0)
 
-    def jacobian_fn(net):
+    def jacobian_fn(net, *, problem=None, **kwargs):
         jac = np.zeros((net.n, net.x.size)) 
 
         for j in range(net.n):
@@ -141,7 +141,7 @@ def HOSglobal(target):
             for i in range(len(net.x))
         ])
     
-    def jacobian_fn(net):
+    def jacobian_fn(net, *, problem=None, **kwargs):
         x = net.x  # edge weights, shape: (E,)
         edge_matrix = net.edge_matrix  # shape: (E, 2), each row is [source, target]
 
@@ -190,7 +190,7 @@ def stationary_dist(target):
         pi = np.linalg.inv(Z)[0, :]
         return pi
     
-    def jacobian_fn(net):
+    def jacobian_fn(net, *, problem=None, **kwargs):
         # not implemented, raise NotImplementedError
         raise NotImplementedError(
             "Jacobian for stationary distribution is not implemented."
@@ -217,7 +217,7 @@ def kemeny_constant(target):
         D = np.linalg.inv(I - P + Pi) - Pi
         return np.trace(D) + 1
     
-    def jacobian_fn(net, problem):
+    def jacobian_fn(net, *, problem=None, **kwargs):
         n = net.n
         P = net.P_matrix
         I = np.eye(n)

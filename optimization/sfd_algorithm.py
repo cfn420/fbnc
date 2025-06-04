@@ -64,7 +64,7 @@ def loss_gradient(net, problem):
 
         # Support both scalar and array outputs
         diff = feature.value(net) - feature.target
-        grad += 2 * np.sum(diff) * feature.jacobian(net, problem)
+        grad += 2 * np.sum(diff) * feature.jacobian(net, problem=problem)
 
     return grad
 
@@ -104,31 +104,45 @@ def armijo_line_search(net, problem, delta, alpha=1.0, beta=0.5, sigma=0.5):
             raise Warning("Line search exceeded 100 iterations. Check the implementation.")
     return k
 
-def L2_descent(net, x_bar):
+def L2_descent(net, problem, gradient):
     """
-    Computes the L2-normalized direction from the current state to x_bar.
+    Computes the steepest feasible descent direction for p = 2.
 
     Parameters:
-        net (Network): Current network state.
-        x_bar (np.ndarray): Target point.
+        net (Network): Current network.
+        problem (ProblemInstance): Problem definition.
+        gradient (np.ndarray): Loss gradient.
 
     Returns:
-        np.ndarray: Normalized descent direction.
+        np.ndarray: Normalized steepest feasible descent direction (L2).
     """
-    return (x_bar - net.x) / norm_Lp(x_bar - net.x, 2)
 
-def L1_descent(net, x_bar):
+    # Define the active set A
+    A = ((net.x == problem.lb) & (gradient > 0)) | ((net.x == problem.ub) & (gradient < 0))
+
+    # Construct δ
+    delta_tilde = np.zeros_like(gradient)
+    delta_tilde[~A] = -gradient[~A]
+
+    # Normalize δ
+    norm = norm_Lp(delta_tilde, 2)
+    if norm == 0:
+        return delta_tilde  # Already optimal or stuck
+    return delta_tilde / norm
+
+def L1_descent(net, problem, gradient):
     """
     Computes an L1-style descent direction (sparse direction aligned with largest gradient).
 
     Parameters:
-        net (Network): Current network state.
-        x_bar (np.ndarray): Target point.
+        net (Network): Current network.
+        problem (ProblemInstance): Problem definition.
+        gradient (np.ndarray): Loss gradient.
 
     Returns:
         np.ndarray: Sparse descent direction vector.
     """
-    delta = L2_descent(net, x_bar)
+    delta = L2_descent(net, problem, gradient)
     ij = np.argmax(np.abs(delta))
     sign = np.sign(delta[ij])
     e = np.zeros_like(delta)
@@ -230,14 +244,13 @@ def L1_descent_markovian(net, problem, gradient):
 
     return delta
 
-def descent_direction(net, problem, config):
+def descent_direction(net, problem):
     """
     Computes a feasible descent direction based on the p-norm (L1 or L2) and network type.
 
     Parameters:
         net (Network): Current network.
         problem (ProblemInstance): Problem definition with norm type and feasibility info.
-        config (Namespace): Configuration options.
 
     Returns:
         np.ndarray: Feasible descent direction.
@@ -250,9 +263,9 @@ def descent_direction(net, problem, config):
     gradient = loss_gradient(net, problem)
     if problem.bMarkovian == False:
         if problem.p_norm == 1:
-            delta = L1_descent(net, gradient)
+            delta = L1_descent(net, problem, gradient)
         elif problem.p_norm == 2:
-            delta = L2_descent(net, gradient)
+            delta = L2_descent(net, problem, gradient)
         else:
             raise ValueError("Invalid p-norm specified. Only 1 and 2 are supported.")
     else:
@@ -265,6 +278,7 @@ def descent_direction(net, problem, config):
 
     if gradient @ delta > 0:
         logger.warning("Gradient and descent direction are not aligned. Check the implementation.")
+        print('gradient @ delta', gradient @ delta)
         raise Warning("Gradient and descent direction are not aligned. Check the implementation.")
 
     return delta
@@ -304,7 +318,7 @@ def fit(net, problem, config=None):
                 logger.info(f"Iteration {k} - Loss: {vObj[k]:.6f}")
 
         # Descent update
-        delta = descent_direction(net, problem, config=config)
+        delta = descent_direction(net, problem)
         alpha = max_stepsize(net, problem, delta, config=config)
         m = armijo_line_search(net, problem, delta, alpha, config.beta, config.sigma)
         vX[k+1] = vX[k] + config.beta**m * alpha * delta
