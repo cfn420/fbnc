@@ -116,8 +116,8 @@ def armijo_line_search(net, problem, delta, alpha=1.0, beta=0.5, sigma=0.5):
         k+=1
         net_perturb.x = net.x + beta**k * alpha * delta
         feasible(net_perturb, problem)
-        if k > 100:
-            logger.warning(f"Line search exceeded 100 iterations. Directional derivative ({problem.gradient @ delta}) too small?.")
+        if k > 1000:
+            logger.warning(f"Armijo line search exceeded 1000 iterations. Directional derivative ({problem.gradient @ delta}) too small?. Max step size ({alpha}) too small?")
             sys.exit(1)
 
     return k
@@ -188,8 +188,8 @@ def L2_descent_markovian(net, problem, gradient):
     """    
     delta = np.zeros(problem.d)
     for i in range(net.n):
-        x_i = net.x[net.neighborhoods[i]]
-        gradient_i = gradient[net.neighborhoods[i]]
+        x_i = net.x[net.neighborhoods_out[i]]
+        gradient_i = gradient[net.neighborhoods_out[i]]
         I = np.array([j for j, val in enumerate(x_i) if val < problem.tol])
 
         def f(lamda):
@@ -210,7 +210,7 @@ def L2_descent_markovian(net, problem, gradient):
             max(lamda - gradient_i[j], 0) if j in I else lamda - gradient_i[j]
             for j in range(len(x_i))
         ])
-        delta[net.neighborhoods[i]] = delta_i
+        delta[net.neighborhoods_out[i]] = delta_i
 
         # Check feasibility of updated direction
         violating_indices = [
@@ -252,13 +252,13 @@ def L1_descent_markovian(net, problem, gradient):
     """    
     delta = L2_descent_markovian(net, problem, gradient)
 
-    i = np.argmax( [ np.max( delta[net.neighborhoods[i]] ) - np.min( delta[net.neighborhoods[i]]) for i in range(net.n) ] ) # Find row with most potential
+    i = np.argmax( [ np.max( delta[net.neighborhoods_out[i]] ) - np.min( delta[net.neighborhoods_out[i]]) for i in range(net.n) ] ) # Find row with most potential
     
-    k = np.argmax( delta[net.neighborhoods[i]] )
-    j = np.argmin( delta[net.neighborhoods[i]] )
+    k = np.argmax( delta[net.neighborhoods_out[i]] )
+    j = np.argmin( delta[net.neighborhoods_out[i]] )
     
-    k = net.neighborhoods[i][k]
-    j = net.neighborhoods[i][j]
+    k = net.neighborhoods_out[i][k]
+    j = net._out[i][j]
     
     delta = np.zeros(problem.d)
     delta[ k ] = 0.5
@@ -331,7 +331,7 @@ def fit(net, problem, config=None):
             if all(np.all(np.abs(feature.value(net) - feature.target) < config.omega) for feature in problem.features):  
                 logger.info(f"Feature target(s) reached at iteration {k}.")
                 break
-            elif np.isclose(problem.gradient @ delta, 0):
+            elif np.isclose(problem.gradient @ delta, 0, atol=problem.tol):
                 logger.info(f"Loss ({vObj[k]:.6f}) is not 0! But convergence reached (directional derivative ({problem.gradient @ delta:.6f}) zero) at iteration {k}.")
                 break
             else:

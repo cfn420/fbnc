@@ -154,7 +154,7 @@ def projection(x_to_proj, problem, tol=1e-8):
     bnds = (problem.lb, problem.ub)
 
     if problem.bMarkovian:
-        required_attrs = ['mA', 'neighborhoods']
+        required_attrs = ['mA', 'neighborhoods_out']
         for attr in required_attrs:
             if not hasattr(problem, attr):
                 raise ValueError(f"ProblemInstance missing required attribute '{attr}' for Markov projection.")
@@ -162,7 +162,7 @@ def projection(x_to_proj, problem, tol=1e-8):
         x = projection_markov(
             x_to_proj,
             bnds=bnds,
-            neighborhoods=problem.neighborhoods,
+            neighborhoods=problem.neighborhoods_out,
             mA=problem.mA
         )
 

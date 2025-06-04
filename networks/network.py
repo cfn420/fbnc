@@ -38,7 +38,8 @@ class Network:
         else:
             self.x = np.zeros(len(self.edge_matrix))
 
-        self.neighborhoods = build_neighborhoods(self.edge_matrix, self.n)
+        self.neighborhoods_out = build_neighborhoods_out(self.edge_matrix, self.n)
+        self.neighborhoods_in = build_neighborhoods_in(self.edge_matrix, self.n)
         
     
     # ----------------------------
@@ -160,9 +161,9 @@ def create_edge_matrix(mA):
     E[:, 1] = indices[1]
     return E
 
-def build_neighborhoods(edge_matrix, N):
+def build_neighborhoods_out(edge_matrix, N):
     """
-    Builds a subset list for projection, grouping vector indices by source node.
+    Builds a subset list for projection, grouping vector indices by source node for outgoing edges.
 
     Parameters:
         edge_matrix (np.ndarray): An array of shape (num_edges, 2), where each row is an edge (i, j).
@@ -174,5 +175,21 @@ def build_neighborhoods(edge_matrix, N):
     neighborhoods = [[] for _ in range(N)]
     for idx, (i, j) in enumerate(edge_matrix):
         neighborhoods[i].append(idx)
+    return neighborhoods
+
+def build_neighborhoods_in(edge_matrix, N):
+    """
+    Builds a subset list for projection, grouping vector indices by source node for ingoing edges.
+
+    Parameters:
+        edge_matrix (np.ndarray): An array of shape (num_edges, 2), where each row is an edge (i, j).
+        N (int): Number of nodes in the network.
+
+    Returns:
+        list of list[int]: neighborhoods[i] contains the indices of edges going to node i.
+    """
+    neighborhoods = [[] for _ in range(N)]
+    for idx, (i, j) in enumerate(edge_matrix):
+        neighborhoods[j].append(idx)
     return neighborhoods
 

@@ -91,12 +91,12 @@ def s_out(target):
         jac = np.zeros((net.n, net.x.size))
 
         for i in range(net.n):
-            out_edge_indices = net.neighborhoods[i]
+            out_edge_indices = net.neighborhoods_out[i]
             jac[i, out_edge_indices] = 1.0
 
         return jac
 
-    return Feature("s_out", target, value_fn, jacobian_fn, projected=False)
+    return Feature("s_out", target, value_fn, jacobian_fn, projected=True)
 
 
 def s_in(target):
@@ -116,7 +116,7 @@ def s_in(target):
         jac = np.zeros((net.n, net.x.size)) 
 
         for j in range(net.n):
-            in_edge_indices = net.neighborhoods[j] 
+            in_edge_indices = net.neighborhoods_in[j] 
             jac[j, in_edge_indices] = 1.0
 
         return jac
@@ -169,6 +169,7 @@ def HOSglobal(target):
 
     return Feature("HOSglobal", target, value_fn, jacobian_fn, projected=False)
 
+
 def stationary_dist(target):
     """
     Constructs a stationary distribution of a stochastic matrix using the linear system solution.
@@ -197,6 +198,7 @@ def stationary_dist(target):
         )
         
     return Feature("stationary_distribution", target, value_fn, jacobian_fn, projected=False)
+
 
 def kemeny_constant(target):
     """

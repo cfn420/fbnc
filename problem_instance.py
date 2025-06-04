@@ -4,7 +4,7 @@ import numpy as np
 from itertools import product
 
 from lin_alg import build_row_sum_constraints, build_col_sum_constraints, echelon_sympy, orthonormal_basis_nullspace, piv_rows
-from networks.network import Network, create_edge_matrix, build_neighborhoods, x_to_matrix
+from networks.network import Network, create_edge_matrix, build_neighborhoods_out, build_neighborhoods_in, x_to_matrix
 from utils import row_normalize
 
 class ProblemInstance:
@@ -44,7 +44,8 @@ class ProblemInstance:
 
         self.N = mA.shape[0]
         self.edge_matrix = create_edge_matrix(np.triu(self.mA) if self.bUndirected else self.mA)
-        self.neighborhoods = build_neighborhoods(self.edge_matrix, self.N)
+        self.neighborhoods_out = build_neighborhoods_out(self.edge_matrix, self.N)
+        self.neighborhoods_in = build_neighborhoods_in(self.edge_matrix, self.N)
 
         # Check config validity
         self.validate()
