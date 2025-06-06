@@ -104,7 +104,7 @@ class ProblemInstance:
             name = feature.name.lower()
             if name == "s_in" and feature.projected:
                 s_in_feature = feature
-            elif name == "s_out" and feature.projected:
+            if name == "s_out" and feature.projected:
                 s_out_feature = feature
 
         if self.bMarkovian:
@@ -127,12 +127,12 @@ class ProblemInstance:
         else:
             # Directed (non-Markovian): use both if provided
             if s_out_feature:
-                A_row = build_row_sum_constraints(self.mA, self.bUndirected)
+                A_row = build_row_sum_constraints(self.mA, self.bUndirected, self.neighborhoods_out)
                 b_row = s_out_feature.target[:, None]
                 A_list.append(A_row)
                 b_list.append(b_row)
             if s_in_feature:
-                A_col = build_col_sum_constraints(self.mA, self.bUndirected)
+                A_col = build_col_sum_constraints(self.mA, self.bUndirected, self.neighborhoods_in)
                 b_col = s_in_feature.target[:, None]
                 A_list.append(A_col)
                 b_list.append(b_col)
@@ -153,7 +153,6 @@ class ProblemInstance:
         A_comb = np.vstack(A_list)
         b_comb = np.vstack(b_list)
         A_b_comb = np.hstack([A_comb, b_comb])
-
         A_b_ech = echelon_sympy(A_b_comb)
 
         A_ech = A_b_ech[:, :-1]

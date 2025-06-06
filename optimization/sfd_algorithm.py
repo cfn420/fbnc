@@ -78,7 +78,8 @@ def loss_gradient(net, problem):
     """  
     grad = np.zeros_like(net.x)
     for feature in problem.features:
-        if feature.contributes_to_loss == False:
+
+        if feature.contributes_to_loss() == False:
             continue  # Skip features enforced by projection
 
         # Support both scalar and array outputs
@@ -323,6 +324,11 @@ def fit(net, problem, config=None):
 
         # Compute descent direction
         problem.gradient = loss_gradient(net, problem)
+        if np.all(np.isclose(problem.gradient, 0, atol=problem.tol)):
+            logger.info(f"Gradient is zero (convergence) at iteration {k}.")
+            net.x = projection(net.x, problem) # non-loss features require projection
+            break
+
         delta = descent_direction(net, problem)
 
         # Check convergence
@@ -340,7 +346,7 @@ def fit(net, problem, config=None):
         # Descent update
         alpha = max_stepsize(net, problem, delta, config=config)
         m = armijo_line_search(net, problem, delta, alpha, config.beta, config.sigma)
-        vX[k+1] = vX[k] + config.beta**m * alpha * delta
+        vX[k+1] = projection( vX[k] + config.beta**m * alpha * delta, problem )
         net.x = vX[k+1]
     
     return Network(mA=problem.mA, x=vX[k], bUndirected=problem.bUndirected)

@@ -18,7 +18,7 @@ def projection_box(x, bnds, tol=1e-8):
     Returns:
         np.ndarray: Vector clipped to the specified bounds.
     """
-    return np.clip(x, bnds[0], bnds[1])
+    return np.clip(x, bnds[0]+tol, bnds[1])
 
 def projection_subspace(x, A_pinv_b, C__C_T_C_inv__C_T):
     """
@@ -118,7 +118,7 @@ def dykstra(x0, tol, A_pinv_b, C__C_T_C_inv__C_T, bnds=(1e-6, 1 - 1e-6), max_ite
     q = np.zeros_like(x)
 
     for k in range(max_iter):
-        z = projection_box(x + p, bnds)
+        z = projection_box(x + p, bnds, tol)
         p += x - z
         x = projection_subspace(z + q, A_pinv_b, C__C_T_C_inv__C_T)
         q += z - x
@@ -127,9 +127,6 @@ def dykstra(x0, tol, A_pinv_b, C__C_T_C_inv__C_T, bnds=(1e-6, 1 - 1e-6), max_ite
             break
     else:
         raise RuntimeError("Projection failed to converge.")
-
-    if np.min(x) < 0:
-        raise Warning("Negative elements found.")
 
     if k > 10000:
         print(f"Projection slow (k={k}).")

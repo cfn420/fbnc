@@ -64,7 +64,7 @@ def echelon_form(matrix):
         j += 1
     return B
 
-def build_row_sum_constraints(mParams, bUndirected):
+def build_row_sum_constraints(mParams, bUndirected, neighborhoods_out):
     """
     Constructs the row-sum constraint matrix for weight parameters.
 
@@ -104,16 +104,14 @@ def build_row_sum_constraints(mParams, bUndirected):
     else:
         N,N = mParams.shape
         param_count = int(np.sum(mParams))
-        param_count_row = np.sum(mParams,axis=1)
         A = np.zeros((N,param_count))
         for i in range(N):
-            A[i, int(sum(param_count_row[:i])): int(sum(param_count_row[:i+1]))] = 1
+            A[i, neighborhoods_out[i]] = 1
         return A
 
-def build_col_sum_constraints(mParams, bUndirected):
+def build_col_sum_constraints(mParams, bUndirected, neighborhoods_in):
     """
-    Constructs the column-sum constraint matrix by transposing the input to 
-    `build_row_sum_constraints`.
+    Constructs the row-sum constraint matrix for weight parameters.
 
     Parameters:
         mParams (np.ndarray): Parameter indicator matrix.
@@ -122,7 +120,15 @@ def build_col_sum_constraints(mParams, bUndirected):
     Returns:
         np.ndarray: Constraint matrix summing incoming weights for each node.
     """
-    return build_row_sum_constraints(mParams.T, bUndirected)
+    if bUndirected:
+        raise NotImplementedError("Column sum constraints for undirected graphs are not implemented.")
+    else:
+        N,N = mParams.shape
+        param_count = int(np.sum(mParams))
+        A = np.zeros((N,param_count))
+        for i in range(N):
+            A[i, neighborhoods_in[i]] = 1
+        return A
 
 def piv_rows(echelon_matrix):
     """
