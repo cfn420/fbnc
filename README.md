@@ -14,7 +14,7 @@ FBNC is introduced in the paper:
 
 ---
 
-## 📦 Prerequisites
+## Prerequisites
 
 - Python 3.12 (tested on 3.12.2)
 - Conda (recommended for environment setup)
@@ -28,11 +28,11 @@ conda activate fbnc
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 All configurable parameters are defined near the top of `main.py` under the **CONFIGURATION** block.
 
-### 🎯 Problem Specification
+### Problem Specification
 
 Problems can be specified in `main.py`. Below setting reproduces FIG. 16 (left) in the paper. Other figures involving the financial network example can be reproduced using `data/financial_network_example.csv`.
 
@@ -63,7 +63,7 @@ Note: any features used should be specified in `network/features.py`. Common fea
 - Kemeny constant
 - Effective resistance
 
-### ⚙️ Optimization Settings
+### Optimization Settings
 
 Located in `main.py`, e.g.:
 
@@ -79,7 +79,7 @@ FBNC_ALG_CONFIG = SimpleNamespace(
 
 ---
 
-## 🚀 Running FBNC
+## Running FBNC
 
 Run a sampling procedure or what-if analysis via:
 
@@ -94,7 +94,7 @@ The script:
 
 ---
 
-## 📊 Output & Results
+## Output & Results
 
 Each run creates a subdirectory in `results/` where in sampling mode:
 
@@ -112,7 +112,7 @@ results/run_YYYYMMDD_HHMMSS/
 
 ---
 
-## 🔖 Citation
+## Citation
 
 If you use this repository, please cite the original paper:
 
@@ -127,12 +127,12 @@ If you use this repository, please cite the original paper:
 
 ---
 
-## 🙏 Acknowledgement
+## Acknowledgement
 The `data/financial_network_example.csv` data on the Argentinian inter bank market is extracted from: https://github.com/fedeglan/my-projects/tree/main/Datasets.
 
 ---
 
-## 🛡️ License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
