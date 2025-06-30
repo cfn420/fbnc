@@ -138,6 +138,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-## 🤝 Contact
+## Contact
 
 Feel free to open an issue or reach out with questions at c.p.c.franssen [at] vu.nl.
